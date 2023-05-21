@@ -1,0 +1,11 @@
+# GitIgnore for python
+bin/
+include/
+lib/
+lib64/
+local/
+pip-selfcheck.json
+pyvenv.cfg
+config.py
+__pycache__/
+data/
