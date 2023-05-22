@@ -17,14 +17,14 @@ class Agent:
         self.memory_decay_factor: int = memory_decay_factor
         self.model = model
 
-    def add_memory(self, description):
-        memory = Memory(description=description, creation_time=datetime.now(), last_access_time=datetime.now(), model=self.model)
+    def add_memory(self, description, current_time):
+        memory = Memory(description=description, creation_time=current_time, last_access_time=current_time, model=self.model)
         self.memory_stream.append(memory)
 
-    def retrieve_memories(self, query: str, max_count: int=10):
+    def retrieve_memories(self, query: str, current_time, max_count: int=10):
         scores = []
         for memory in self.memory_stream:
-            recency_score = memory.compute_recency_score(self.memory_decay_factor)
+            recency_score = memory.compute_recency_score(self.memory_decay_factor, current_time)
             relevance_score = memory.compute_relevance_score(query)
             score = 1.0 * recency_score + 1.0 * memory.importance + 1.0 * relevance_score
             scores.append(score)
@@ -36,9 +36,9 @@ class Agent:
         recent_memories = sorted(self.memory_stream, key=lambda x: x.creation_time, reverse=True)
         recent_memories = recent_memories[:5]  # limit to last 100 memories
         sum_importance = sum([mem.importance for mem in recent_memories if mem.type == 'memory'])
-        return sum_importance > 28
+        return sum_importance > 18
 
-    def reflect(self):
+    def reflect(self, current_time):
         """
         Generate a reflection based on the past few memories.
         """
@@ -55,6 +55,7 @@ Only reply with the questions (each in a new line), nothing else. Do not number 
 """
 
         # Query the model for questions
+        print("reflecting...")
         response = openai.ChatCompletion.create(
             model=self.model,
             messages=[
@@ -62,10 +63,9 @@ Only reply with the questions (each in a new line), nothing else. Do not number 
             ],
         )
         questions = response.choices[0].message["content"].strip().split("\n")
-        print(f"Questions: {questions}")
-
+        questions = [q.strip() for q in questions if q.strip() != ""]
         for question in questions:
-            print("Generating insights for question: ", question)
+            print("reflecting on question: ", question)
             # Retrieve relevant memories for each question
             relevant_memories = self.retrieve_memories(question, 5)
 
@@ -73,7 +73,15 @@ Only reply with the questions (each in a new line), nothing else. Do not number 
             context = "\n".join([f"{i+1}. {mem.description}" for i, mem in enumerate(relevant_memories)])
 
             # Construct the query to the model for generating insights
-            insight_prompt = f"Context: {context}\n\nWhat high-level insight about the question can {self.name} infer from the above context? Only reply with the insight, nothing else.\n\nQuestion: {question}"
+            insight_prompt = f"""
+Context: {context}
+
+What high-level insight about the question can {self.name} infer from the above context?
+
+Only reply with the insight, nothing else. The insight should be in the format "{self.name} should/can/needs to/should not/cannot/does not need to/does not have to <insight>".
+
+Question: {question}
+"""
 
             # Query the model for insight
             response = openai.ChatCompletion.create(
@@ -85,11 +93,11 @@ Only reply with the questions (each in a new line), nothing else. Do not number 
             insight = response.choices[0].message["content"].strip()
 
             # Create and store reflection
-            reflection = Memory(description=insight, creation_time=datetime.now(), last_access_time=datetime.now(), model=self.model, type="reflection")
+            reflection = Memory(description=insight, creation_time=current_time, last_access_time=current_time, model=self.model, type="reflection")
             print(f"Reflection: {reflection.description}")
             self.memory_stream.append(reflection)
 
-    def create_daily_plan(self, current_hour):
+    def create_daily_plan(self, current_time):
         """
         Create a high-level plan for the agent's day, based on the agent's description
         and recent experiences.
@@ -107,9 +115,9 @@ Recent experiences:
 {context}
 Devise a plan for {self.name} in broad strokes for their day. Only reply with the plan with each task in one line, nothing else.
 
-Use this format (7: do x 8: do y ... 21: Go to sleep). Here the numbers are the hours of the day from 0 - 24.
+Use this format (7: do x 8: do y ... 21: Go to sleep). Make sure the numbers are the hours of the day from 0 - 24 (not 0-12)
 
-Start with current hour of day: {current_hour}
+Start with current hour of day: {current_time % 24}
 """
         # Generate the daily plan
         response = openai.ChatCompletion.create(
@@ -123,13 +131,13 @@ Start with current hour of day: {current_hour}
         plan = response.choices[0].message["content"].strip()
 
         # Create a Plan memory and store it in the agent's memory_stream
-        plan_memory = Memory(description=plan, type='plan')
+        plan_memory = Memory(description=plan, type='plan', creation_time=current_time, last_access_time=current_time)
         self.memory_stream.append(plan_memory)
         self.todays_plan = plan_memory
 
         return plan
 
-    def execute_next(self, current_hour):
+    def execute_next(self, current_time):
         recent_memories = sorted(self.memory_stream, key=lambda x: x.creation_time, reverse=True)
         recent_memories = recent_memories[:10]
         context = "\n".join([f"{i+1}. {mem.description}" for i, mem in enumerate(recent_memories)])
@@ -139,11 +147,13 @@ Name: {self.name}
 Description: {self.description}
 Recent experiences:
 {context}
-Current hour of day: {current_hour}
+Current hour of day: {current_time % 24}
 Today's plan with tasks for each hour of day:
 {self.todays_plan.description}
 
 What does {self.name} do next at the current hour of day, based on today's plan? Example output: {self.name} does X.
+
+Do not mention the current hour of day or the plan in your response. Only say something like "{self.name} does X".
         """
         response = openai.ChatCompletion.create(
             model=self.model,
@@ -152,7 +162,7 @@ What does {self.name} do next at the current hour of day, based on today's plan?
             ],
         )
         next_task = response.choices[0].message["content"].strip()
-        self.memory_stream.append(Memory(description=next_task))
+        self.memory_stream.append(Memory(description=next_task, creation_time=current_time, last_access_time=current_time))
         self.print_memory_stream()
 
     def print_memory_stream(self):

@@ -32,8 +32,8 @@ class Memory:
     def __init__(
             self,
             description: str,
-            creation_time: datetime=datetime.now(),
-            last_access_time: datetime=datetime.now(),
+            creation_time: int,
+            last_access_time: int,
             model='gpt-3.5-turbo',
             type='memory',
             related_memories: Optional[list]=None,
@@ -45,11 +45,10 @@ class Memory:
         self.importance: int = compute_importance(description=description, model=model)
         self.embedding: np.ndarray = embed(description=description)
         self.related_memories = related_memories if related_memories else []
-        print("new memory added!")
+        print(f"new memory added! {self.description}")
 
-    def compute_recency_score(self, decay_factor: float) -> float:
-        current_time = datetime.now()
-        time_difference = (current_time - self.last_access_time).total_seconds() / 3600  # time difference in hours
+    def compute_recency_score(self, decay_factor: float, current_time) -> float:
+        time_difference = (current_time - self.creation_time) / 60 # time difference in hours
         return decay_factor ** time_difference
 
     def compute_relevance_score(self, query: str) -> float:

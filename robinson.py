@@ -14,13 +14,13 @@ def main():
                         "He is resourceful and has started thinking about ways to utilize the limited resources around him to create a makeshift shelter and find food. " +
                         "Crusoe knows that he must also maintain his resilience in order to withstand the physical and emotional challenges that lie ahead.",
         )
-        robinson.add_memory("Robinson Crusoe awakes on the shore of a deserted island after surviving a shipwreck.")
-        robinson.add_memory("Robinson Crusoe explores the island, finding a source of fresh water.")
-        robinson.add_memory("Robinson Crusoe discovers a grove of fruit trees, providing a source of food.")
-        robinson.add_memory("Robinson Crusoe builds a makeshift shelter from branches and leaves.")
-        robinson.add_memory("Robinson Crusoe finds the wreckage of his ship washed up on the shore and salvages some tools and supplies.")
-        robinson.add_memory("Robinson Crusoe carves a large 'HELP' sign into the beach in the hope of attracting the attention of passing ships.")
-        robinson.add_memory("Robinson Crusoe makes a fire by striking stones together to create sparks.")
+        robinson.add_memory("Robinson Crusoe awakes on the shore of a deserted island after surviving a shipwreck.", current_time=0)
+        robinson.add_memory("Robinson Crusoe explores the island, finding a source of fresh water.", current_time=0)
+        robinson.add_memory("Robinson Crusoe discovers a grove of fruit trees, providing a source of food.", current_time=0)
+        robinson.add_memory("Robinson Crusoe builds a makeshift shelter from branches and leaves.", current_time=0)
+        robinson.add_memory("Robinson Crusoe finds the wreckage of his ship washed up on the shore and salvages some tools and supplies.", current_time=0)
+        robinson.add_memory("Robinson Crusoe carves a large 'HELP' sign into the beach in the hope of attracting the attention of passing ships.", current_time=0)
+        robinson.add_memory("Robinson Crusoe makes a fire by striking stones together to create sparks.", current_time=0)
         with open("data/robinson.pickle", "wb") as f:
             pickle.dump(robinson, f)
     else:
@@ -29,14 +29,19 @@ def main():
             robinson = pickle.load(f)
 
     robinson.print_memory_stream()
-    time = 7
-    robinson.create_daily_plan(time)
-    for _ in range(10):
+    current_time = 7
+    while True:
         if robinson.should_reflect():
-            robinson.reflect()
-        robinson.execute_next(time)
-        time += 1
+            robinson.reflect(current_time)
 
+
+        if current_time % 24 == 7:
+            # wake up and plan
+            robinson.create_daily_plan(current_time)
+
+        robinson.execute_next(current_time)
+        robinson.print_memory_stream()
+        current_time += 1
 
 
 if __name__ == '__main__':
