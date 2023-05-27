@@ -45,7 +45,6 @@ class Memory:
         self.importance: int = compute_importance(description=description, model=model)
         self.embedding: np.ndarray = embed(description=description)
         self.related_memories = related_memories if related_memories else []
-        print(f"new memory added! {self.description}")
 
     def compute_recency_score(self, decay_factor: float, current_time) -> float:
         time_difference = (current_time - self.creation_time) / 60 # time difference in hours
