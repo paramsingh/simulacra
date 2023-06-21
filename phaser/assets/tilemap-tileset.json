@@ -1,0 +1,14 @@
+{ "columns":20,
+ "image":"Downloads\/Tiny-Islands-by-Majadroid\/tilemap-separated.png",
+ "imageheight":256,
+ "imagewidth":320,
+ "margin":0,
+ "name":"tilemap-separated-test",
+ "spacing":0,
+ "tilecount":320,
+ "tiledversion":"1.10.1",
+ "tileheight":16,
+ "tilewidth":16,
+ "type":"tileset",
+ "version":"1.10"
+}

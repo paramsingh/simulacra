@@ -9,3 +9,5 @@ pyvenv.cfg
 config.py
 __pycache__/
 data/
+phaser/dist/*
+phaser/node_modules/*
