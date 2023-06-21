@@ -8,12 +8,16 @@ class MainScene extends Phaser.Scene {
   preload() {
     this.load.tilemapTiledJSON("map", "assets/map.json"); // loading the map
     this.load.image("tiles", "assets/tilemap.png"); // loading the tileset
+    this.load.spritesheet("characters", "assets/characters.png", {
+      frameWidth: 16,
+    });
   }
 
   create() {
     const map = this.make.tilemap({ key: "map" });
     const tileset = map.addTilesetImage("tilemap-separated-test", "tiles");
-    const worldLayer = map.createLayer("Tile Layer 1", tileset!, 0, 0);
+    map.createLayer("Tile Layer 1", tileset!, 0, 0);
+    this.add.sprite(300, 100, "characters", 0); // the last parameter is the index of the character in the spritesheet
   }
 }
 
