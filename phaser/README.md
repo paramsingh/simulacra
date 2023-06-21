@@ -15,3 +15,5 @@ npm run start
 ```
 http-server
 ```
+
+TODO: give credit for open game art
