@@ -16,6 +16,6 @@ npm run start
 http-server
 ```
 
-TODO: give credit for open game art
+Tilemap: https://majadroid.itch.io/tiny-islands-16x16-tilemap
 
 ![screen](screen.png)
